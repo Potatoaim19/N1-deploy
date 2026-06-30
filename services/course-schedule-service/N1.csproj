@@ -11,6 +11,7 @@
   <ItemGroup>
     <!-- Removed Microsoft.AspNetCore.OpenApi to avoid Microsoft.OpenApi V2 conflict with Swashbuckle -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0-preview.1.25081.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0-preview.1.25081.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0-preview.1.25081.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0-preview.1.25120.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
