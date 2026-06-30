@@ -21,7 +21,7 @@ builder.Services.AddHealthChecks();
 
 // Database configuration
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseInMemoryDatabase("CourseScheduleDb"));
 
 // Add HttpClient for external service calls
 builder.Services.AddHttpClient("AuthService", client =>
@@ -112,11 +112,11 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ApplicationDbContext>();
 
-    // Tự động tạo DB và bảng nếu chưa có (Dùng cho Azure)
-    if (app.Environment.IsProduction())
-    {
-        context.Database.Migrate();
-    }
+    // Tự động tạo DB và bảng nếu chưa có (Chỉ dùng cho SQL Server thật)
+    // if (app.Environment.IsProduction())
+    // {
+    //    context.Database.Migrate();
+    // }
 
     DbSeeder.Seed(context);
 }
