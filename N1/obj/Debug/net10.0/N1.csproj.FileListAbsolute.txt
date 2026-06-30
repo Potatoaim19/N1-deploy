@@ -158,3 +158,4 @@ C:\Users\lengo\N1\N1\obj\Debug\net10.0\refint\N1.dll
 C:\Users\lengo\N1\N1\obj\Debug\net10.0\N1.pdb
 C:\Users\lengo\N1\N1\obj\Debug\net10.0\N1.genruntimeconfig.cache
 C:\Users\lengo\N1\N1\obj\Debug\net10.0\ref\N1.dll
+C:\Users\lengo\N1\N1\obj\Debug\net10.0\N1.sourcelink.json
