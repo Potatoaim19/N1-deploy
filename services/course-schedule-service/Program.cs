@@ -17,8 +17,7 @@ builder.Services.AddControllers()
     });
 
 // Thêm Health Checks
-builder.Services.AddHealthChecks()
-    .AddDbContextCheck<ApplicationDbContext>();
+builder.Services.AddHealthChecks();
 
 // Database configuration
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
