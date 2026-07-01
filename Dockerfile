@@ -15,5 +15,5 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 
-# Tìm file .dll chính để chạy (Giả sử file dll cùng tên với project)
-ENTRYPOINT ["sh", "-c", "dotnet $(ls *.dll | head -n 1) --urls http://0.0.0.0:8080"]
+# Tìm file .dll chính để chạy
+ENTRYPOINT ["dotnet", "N1.dll", "--urls", "http://0.0.0.0:8080"]
