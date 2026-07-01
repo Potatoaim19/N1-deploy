@@ -16,6 +16,17 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
 
+// Cấu hình CORS để cho phép các Team khác (Frontend/Mobile) kết nối
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // Thêm Health Checks
 builder.Services.AddHealthChecks();
 
@@ -25,6 +36,20 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Seed data
 var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+app.UseSwagger();
+app.UseSwaggerUI(c => {
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Course Schedule API V1");
+    c.RoutePrefix = "swagger";
+});
+
+app.UseHttpsRedirection();
+app.UseCors("AllowAll"); // Bật CORS
+app.MapHealthChecks("/health");
+app.MapGet("/", () => "Course Schedule API is running!");
+app.UseAuthorization();
+app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
