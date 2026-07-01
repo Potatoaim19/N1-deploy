@@ -37,6 +37,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Seed data
 var app = builder.Build();
 
+app.UseDeveloperExceptionPage(); // Ép hiện lỗi chi tiết
+
 // Configure the HTTP request pipeline.
 app.UseSwagger();
 app.UseSwaggerUI(c => {
@@ -44,8 +46,9 @@ app.UseSwaggerUI(c => {
     c.RoutePrefix = "swagger";
 });
 
-app.UseHttpsRedirection();
-app.UseCors("AllowAll"); // Bật CORS
+// app.UseHttpsRedirection(); // Tắt để tránh lỗi 500 vòng lặp
+
+app.UseCors("AllowAll");
 app.MapHealthChecks("/health");
 app.MapGet("/", () => "Course Schedule API is running!");
 app.UseAuthorization();
@@ -58,13 +61,11 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        // Chỉ chạy migrate và seed nếu thực sự cần thiết, nếu lỗi thì bỏ qua để App không bị chết
         context.Database.Migrate();
         DbSeeder.Seed(context);
     }
     catch (Exception ex)
     {
-        // Log lỗi ra console nhưng vẫn cho App chạy tiếp
         Console.WriteLine("Lỗi DB không chặn App chạy: " + ex.Message);
     }
 }
