@@ -51,20 +51,21 @@ app.MapGet("/", () => "Course Schedule API is running!");
 app.UseAuthorization();
 app.MapControllers();
 
+// Seed data
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<ApplicationDbContext>();
-
     try
     {
-        // Chuyển sang Migrate() để ép tạo bảng chuẩn
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        // Chỉ chạy migrate và seed nếu thực sự cần thiết, nếu lỗi thì bỏ qua để App không bị chết
         context.Database.Migrate();
         DbSeeder.Seed(context);
     }
     catch (Exception ex)
     {
-        Console.WriteLine("Lỗi khởi tạo DB: " + ex.Message);
+        // Log lỗi ra console nhưng vẫn cho App chạy tiếp
+        Console.WriteLine("Lỗi DB không chặn App chạy: " + ex.Message);
     }
 }
 
