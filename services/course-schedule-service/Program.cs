@@ -8,66 +8,84 @@ using N1.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// 1. Đăng ký Controllers và JSON options
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // Fix for Circular References
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
 
-// Cấu hình CORS để cho phép các Team khác (Frontend/Mobile) kết nối
+// 2. Đăng ký CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
     });
 });
 
-// Thêm Health Checks
+// 3. Đăng ký Swagger (Bắt buộc phải có đoạn này)
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Course Schedule API", Version = "v1" });
+});
+
+// 4. Đăng ký Health Checks
 builder.Services.AddHealthChecks();
 
-// Database configuration
+// 5. Đăng ký Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Seed data
+// 6. Đăng ký HttpClient
+builder.Services.AddHttpClient("AuthService", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ExternalServices:PaymentAuthBaseUrl"] ?? "http://localhost:5203");
+});
+
+// 7. Đăng ký Auth
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "default_secret_key_at_least_32_chars"))
+    };
+});
+
 var app = builder.Build();
 
-app.UseDeveloperExceptionPage(); // Ép hiện lỗi chi tiết
-
-// Configure the HTTP request pipeline.
+// CẤU HÌNH PIPELINE
+app.UseDeveloperExceptionPage();
 app.UseSwagger();
 app.UseSwaggerUI(c => {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Course Schedule API V1");
     c.RoutePrefix = "swagger";
 });
 
-// app.UseHttpsRedirection(); // Tắt để tránh lỗi 500 vòng lặp
-
 app.UseCors("AllowAll");
 app.MapHealthChecks("/health");
 app.MapGet("/", () => "Course Schedule API is running!");
+
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Seed data
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
+// Khởi tạo Database âm thầm
+try {
+    using (var scope = app.Services.CreateScope())
     {
-        var context = services.GetRequiredService<ApplicationDbContext>();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         context.Database.Migrate();
         DbSeeder.Seed(context);
     }
-    catch (Exception ex)
-    {
-        Console.WriteLine("Lỗi DB không chặn App chạy: " + ex.Message);
-    }
+} catch (Exception ex) {
+    Console.WriteLine("DB Seed Error: " + ex.Message);
 }
 
 app.Run();
