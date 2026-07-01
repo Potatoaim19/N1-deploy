@@ -33,8 +33,8 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        // Ép buộc tạo database và bảng ngay khi khởi động
-        context.Database.EnsureCreated();
+        // Chuyển sang Migrate() để ép tạo bảng chuẩn
+        context.Database.Migrate();
         DbSeeder.Seed(context);
     }
     catch (Exception ex)
