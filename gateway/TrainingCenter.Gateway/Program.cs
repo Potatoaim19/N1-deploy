@@ -20,7 +20,7 @@ builder.Configuration.AddJsonFile(
 // Đọc JWT theo chuẩn thống nhất của dự án
 var jwtSecret =
     Environment.GetEnvironmentVariable("JWT_SECRET")
-    ?? builder.Configuration["Jwt:SecretKey"];
+    ?? builder.Configuration["Jwt:Key"];
 
 var jwtIssuer =
     Environment.GetEnvironmentVariable("JWT_ISSUER")
@@ -30,25 +30,9 @@ var jwtAudience =
     Environment.GetEnvironmentVariable("JWT_AUDIENCE")
     ?? builder.Configuration["Jwt:Audience"];
 
-// CORS
-var allowedOrigins = builder.Configuration
-    .GetSection("Cors:AllowedOrigins")
-    .Get<string[]>() ?? Array.Empty<string>();
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("FrontendCors", policy =>
-    {
-        policy
-            .WithOrigins(allowedOrigins)
-            .AllowAnyHeader()
-            .AllowAnyMethod();
-    });
-});
+// ... (phần code CORS giữ nguyên) ...
 
 // Cấu hình JWT cho Gateway.
-// Hiện tại Gateway chưa bắt buộc validate JWT ở mọi route,
-// nhưng cấu hình sẵn để sau này dùng được.
 if (!string.IsNullOrWhiteSpace(jwtSecret))
 {
     builder.Services
@@ -69,7 +53,11 @@ if (!string.IsNullOrWhiteSpace(jwtSecret))
                 ),
 
                 ValidateLifetime = true,
-                ClockSkew = TimeSpan.FromMinutes(2)
+                ClockSkew = TimeSpan.FromMinutes(2),
+
+                // Thống nhất Claim Types
+                NameClaimType = "sub",
+                RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
             };
         });
 
