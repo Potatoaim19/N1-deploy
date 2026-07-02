@@ -1,0 +1,27 @@
+# .NET Core
+bin/
+obj/
+out/
+[Dd]ebug/
+[Rr]elease/
+
+# Visual Studio / JetBrains
+.vs/
+.idea/
+*.user
+*.userosscache
+*.sln.docstates
+.vs-code/
+
+# Rider
+.idea/
+
+# macOS
+.DS_Store
+
+# Cấu hình cá nhân
+appsettings.Local.json
+appsettings.Development.local.json
+
+# Docker
+.dockerignore
