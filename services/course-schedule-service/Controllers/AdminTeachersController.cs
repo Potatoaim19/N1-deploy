@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using N1.Data;
 using N1.Models;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace N1.Controllers
 {
@@ -53,6 +54,7 @@ namespace N1.Controllers
             if (createAccount)
             {
                 await CreateExternalAccount(teacher);
+                await _context.SaveChangesAsync();
             }
 
             return CreatedAtAction(nameof(GetTeacher), new { id = teacher.Id }, teacher);
@@ -117,7 +119,36 @@ namespace N1.Controllers
                     phone = teacher.Phone
                 });
 
-                return response.IsSuccessStatusCode;
+                if (!response.IsSuccessStatusCode)
+                {
+                    return false;
+                }
+
+                var content = await response.Content.ReadAsStringAsync();
+                if (!string.IsNullOrWhiteSpace(content))
+                {
+                    try
+                    {
+                        using var document = JsonDocument.Parse(content);
+                        if (document.RootElement.TryGetProperty("userId", out var userIdProperty) ||
+                            document.RootElement.TryGetProperty("id", out userIdProperty))
+                        {
+                            var userId = userIdProperty.GetString();
+                            if (!string.IsNullOrEmpty(userId))
+                            {
+                                teacher.UserId = userId;
+                                _context.Teachers.Update(teacher);
+                                await _context.SaveChangesAsync();
+                            }
+                        }
+                    }
+                    catch (JsonException)
+                    {
+                        // Ignore invalid JSON and preserve existing teacher record.
+                    }
+                }
+
+                return true;
             }
             catch (Exception)
             {
