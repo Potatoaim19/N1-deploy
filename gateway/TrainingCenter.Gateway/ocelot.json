@@ -31,8 +31,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "YOUR_PAYMENT_SERVICE.somee.com",
-          "Port": 80
+          "Host": "26.222.155.205",
+          "Port": 5203
         }
       ]
     }
