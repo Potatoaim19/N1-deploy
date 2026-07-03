@@ -51,17 +51,21 @@ builder.Services.AddHttpClient("AuthService", client =>
 });
 
 // 7. Đăng ký Auth
-var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
+var rawJwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
                 ?? builder.Configuration["Jwt:Key"]
                 ?? "sbEl82-7Rcec7ezEQgAHYJb-uXX7SaLAXgLCoZtIQIep5hKibwdWkIzKkbD-KumM";
 
-var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER")
-                ?? builder.Configuration["Jwt:Issuer"]
-                ?? "TrainingCenter.Auth";
+var jwtSecret = rawJwtSecret.Trim().Trim('"');
 
-var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE")
+var jwtIssuer = (Environment.GetEnvironmentVariable("JWT_ISSUER")
+                ?? builder.Configuration["Jwt:Issuer"]
+                ?? "TrainingCenter.Auth").Trim().Trim('"');
+
+var jwtAudience = (Environment.GetEnvironmentVariable("JWT_AUDIENCE")
                   ?? builder.Configuration["Jwt:Audience"]
-                  ?? "TrainingCenter.Api";
+                  ?? "TrainingCenter.Api").Trim().Trim('"');
+
+Console.WriteLine($"JWT Config: Issuer={jwtIssuer}, Audience={jwtAudience}, SecretLength={jwtSecret.Length}");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(options =>
@@ -81,14 +85,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         RoleClaimType = ClaimTypes.Role,
         NameClaimType = ClaimTypes.NameIdentifier,
 
-        ClockSkew = TimeSpan.FromMinutes(5) // Thêm độ lệch thời gian an toàn
+        ClockSkew = TimeSpan.FromMinutes(5)
     };
 
     options.Events = new JwtBearerEvents
     {
         OnAuthenticationFailed = context =>
         {
-            Console.WriteLine("JWT Auth Failed: " + context.Exception.Message);
+            Console.WriteLine($"JWT Auth Failed: {context.Exception.Message}");
             return Task.CompletedTask;
         }
     };
