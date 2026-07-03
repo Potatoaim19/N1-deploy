@@ -36,8 +36,13 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddHealthChecks();
 
 // 5. Đăng ký Database
+var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL")
+                      ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(connectionString, sqlOptions => {
+        sqlOptions.EnableRetryOnFailure();
+    }));
 
 // 6. Đăng ký HttpClient
 builder.Services.AddHttpClient("AuthService", client =>
@@ -73,12 +78,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
 
-        // Đảm bảo đọc đúng Role từ Service 3
-        RoleClaimType = ClaimTypes.Role, // http://schemas.microsoft.com/ws/2008/06/identity/claims/role
-        NameClaimType = ClaimTypes.NameIdentifier // http://schemas.microsoft.com/ws/2008/06/identity/claims/nameidentifier
+        RoleClaimType = ClaimTypes.Role,
+        NameClaimType = ClaimTypes.NameIdentifier,
+
+        ClockSkew = TimeSpan.FromMinutes(5) // Thêm độ lệch thời gian an toàn
     };
 
-    // Thêm log để debug nếu cần (optional)
     options.Events = new JwtBearerEvents
     {
         OnAuthenticationFailed = context =>
