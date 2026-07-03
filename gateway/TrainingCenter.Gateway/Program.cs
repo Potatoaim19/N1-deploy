@@ -1,4 +1,5 @@
 using System.Text;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Ocelot.DependencyInjection;
@@ -56,8 +57,8 @@ if (!string.IsNullOrWhiteSpace(jwtSecret))
                 ClockSkew = TimeSpan.FromMinutes(2),
 
                 // Thống nhất Claim Types
-                NameClaimType = "sub",
-                RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+                NameClaimType = ClaimTypes.NameIdentifier,
+                RoleClaimType = ClaimTypes.Role
             };
         });
 

@@ -11,9 +11,9 @@ namespace N1.Data
 
             if (context.Courses.Any()) return; // DB has been seeded
 
-            // 1. Seed Courses
+            // 1. Seed Courses (Seed ít nhất 20 để có ID 10)
             var courses = new List<Course>();
-            for (int i = 1; i <= 50; i++)
+            for (int i = 1; i <= 20; i++)
             {
                 courses.Add(new Course
                 {
@@ -30,9 +30,9 @@ namespace N1.Data
             context.Courses.AddRange(courses);
             context.SaveChanges();
 
-            // 2. Seed Teachers
+            // 2. Seed Teachers (Seed ít nhất 210 để có ID 201)
             var teachers = new List<Teacher>();
-            for (int i = 1; i <= 50; i++)
+            for (int i = 1; i <= 210; i++)
             {
                 teachers.Add(new Teacher
                 {
@@ -47,19 +47,22 @@ namespace N1.Data
             context.Teachers.AddRange(teachers);
             context.SaveChanges();
 
-            // 3. Seed Classes
+            // 3. Seed Classes (Seed ít nhất 110 để có ID 100)
             var classes = new List<Class>();
             var courseList = context.Courses.ToList();
             var teacherList = context.Teachers.ToList();
-            for (int i = 1; i <= 50; i++)
+            for (int i = 1; i <= 110; i++)
             {
                 var startDate = DateTime.UtcNow.AddDays(i);
+                var cIdx = (i - 1) % courseList.Count;
+                var tIdx = (i - 1) % teacherList.Count;
+
                 classes.Add(new Class
                 {
-                    CourseId = courseList[i - 1].Id,
-                    TeacherId = teacherList[i - 1].Id,
+                    CourseId = courseList[cIdx].Id,
+                    TeacherId = teacherList[tIdx].Id,
                     ClassCode = $"CLS{i:D3}",
-                    Name = $"Class for {courseList[i - 1].Name}",
+                    Name = $"Class {i} for {courseList[cIdx].Name}",
                     StartDate = startDate,
                     EndDate = startDate.AddMonths(2),
                     RegistrationStartDate = startDate.AddDays(-14),
@@ -77,7 +80,7 @@ namespace N1.Data
             // 4. Seed ClassSessions
             var sessions = new List<ClassSession>();
             var classList = context.Classes.ToList();
-            for (int i = 1; i <= 50; i++)
+            for (int i = 1; i <= classList.Count; i++)
             {
                 sessions.Add(new ClassSession
                 {
