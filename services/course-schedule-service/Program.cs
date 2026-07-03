@@ -46,24 +46,46 @@ builder.Services.AddHttpClient("AuthService", client =>
 });
 
 // 7. Đăng ký Auth
-var jwtSecret = builder.Configuration["Jwt:Key"] ?? "sbEl82-7Rcec7ezEQgAHYJb-uXX7SaLAXgLCoZtIQIep5hKibwdWkIzKkbD-KumM";
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
+                ?? builder.Configuration["Jwt:Key"]
+                ?? "sbEl82-7Rcec7ezEQgAHYJb-uXX7SaLAXgLCoZtIQIep5hKibwdWkIzKkbD-KumM";
+
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER")
+                ?? builder.Configuration["Jwt:Issuer"]
+                ?? "TrainingCenter.Auth";
+
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE")
+                  ?? builder.Configuration["Jwt:Audience"]
+                  ?? "TrainingCenter.Api";
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
-        ValidIssuer = "TrainingCenter.Auth",
+        ValidIssuer = jwtIssuer,
 
         ValidateAudience = true,
-        ValidAudience = "TrainingCenter.Api",
+        ValidAudience = jwtAudience,
 
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
 
-        RoleClaimType = ClaimTypes.Role,
-        NameClaimType = ClaimTypes.NameIdentifier
+        // Đảm bảo đọc đúng Role từ Service 3
+        RoleClaimType = ClaimTypes.Role, // http://schemas.microsoft.com/ws/2008/06/identity/claims/role
+        NameClaimType = ClaimTypes.NameIdentifier // http://schemas.microsoft.com/ws/2008/06/identity/claims/nameidentifier
+    };
+
+    // Thêm log để debug nếu cần (optional)
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine("JWT Auth Failed: " + context.Exception.Message);
+            return Task.CompletedTask;
+        }
     };
 });
 
