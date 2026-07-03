@@ -56,16 +56,17 @@ var rawJwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
                 ?? "sbEl82-7Rcec7ezEQgAHYJb-uXX7SaLAXgLCoZtIQIep5hKibwdWkIzKkbD-KumM";
 
 var jwtSecret = rawJwtSecret.Trim().Trim('"');
+var jwtIssuer = (Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "TrainingCenter.Auth").Trim().Trim('"');
+var jwtAudience = (Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "TrainingCenter.Api").Trim().Trim('"');
 
-var jwtIssuer = (Environment.GetEnvironmentVariable("JWT_ISSUER")
-                ?? builder.Configuration["Jwt:Issuer"]
-                ?? "TrainingCenter.Auth").Trim().Trim('"');
-
-var jwtAudience = (Environment.GetEnvironmentVariable("JWT_AUDIENCE")
-                  ?? builder.Configuration["Jwt:Audience"]
-                  ?? "TrainingCenter.Api").Trim().Trim('"');
-
-Console.WriteLine($"JWT Config: Issuer={jwtIssuer}, Audience={jwtAudience}, SecretLength={jwtSecret.Length}");
+// Danh sách các Key tiềm năng để giải mã
+var signingKeys = new List<SecurityKey> {
+    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+};
+try {
+    // Thử thêm bản Base64 (phòng trường hợp Service 3 dùng Base64)
+    signingKeys.Add(new SymmetricSecurityKey(Convert.FromBase64String(jwtSecret)));
+} catch { }
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(options =>
@@ -74,17 +75,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         ValidateIssuer = true,
         ValidIssuer = jwtIssuer,
-
         ValidateAudience = true,
         ValidAudience = jwtAudience,
-
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-
+        IssuerSigningKeys = signingKeys, // Thử tất cả các key
         RoleClaimType = ClaimTypes.Role,
         NameClaimType = ClaimTypes.NameIdentifier,
-
         ClockSkew = TimeSpan.FromMinutes(5)
     };
 
@@ -94,13 +91,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             Console.WriteLine($"JWT Auth Failed: {context.Exception.Message}");
             return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine("JWT Auth SUCCESS!");
+            return Task.CompletedTask;
         }
     };
 });
 
 var app = builder.Build();
 
-// CẤU HÌNH PIPELINE
+// CẤU HÌNH PIPELINE (Đúng thứ tự Leader yêu cầu)
 app.UseDeveloperExceptionPage();
 app.UseSwagger();
 app.UseSwaggerUI(c => {
@@ -108,12 +110,14 @@ app.UseSwaggerUI(c => {
     c.RoutePrefix = "swagger";
 });
 
+app.UseRouting(); // Thêm explicit Routing
 app.UseCors("AllowAll");
-app.MapHealthChecks("/health");
-app.MapGet("/", () => "Course Schedule API is running!");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHealthChecks("/health");
+app.MapGet("/", () => "Course Schedule API is running!");
 app.MapControllers();
 
 // Khởi tạo Database âm thầm

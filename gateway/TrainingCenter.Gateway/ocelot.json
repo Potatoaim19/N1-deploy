@@ -4,11 +4,11 @@
       "UpstreamPathTemplate": "/api/course-schedule/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS" ],
       "DownstreamPathTemplate": "/api/course-schedule/{everything}",
-      "DownstreamScheme": "http",
+      "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
-          "Host": "YOUR_COURSE_SERVICE.somee.com",
-          "Port": 80
+          "Host": "SERVICE_1_RAILWAY_URL_HERE.up.railway.app",
+          "Port": 443
         }
       ]
     },
