@@ -7,7 +7,7 @@
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
-          "Host": "SERVICE_1_RAILWAY_URL_HERE.up.railway.app",
+          "Host": "training-center-management-production.up.railway.app",
           "Port": 443
         }
       ]

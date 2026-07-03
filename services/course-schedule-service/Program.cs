@@ -56,30 +56,17 @@ var rawJwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
                 ?? "sbEl82-7Rcec7ezEQgAHYJb-uXX7SaLAXgLCoZtIQIep5hKibwdWkIzKkbD-KumM";
 
 var jwtSecret = rawJwtSecret.Trim().Trim('"');
-var jwtIssuer = (Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "TrainingCenter.Auth").Trim().Trim('"');
-var jwtAudience = (Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "TrainingCenter.Api").Trim().Trim('"');
-
-// Danh sách các Key tiềm năng để giải mã
-var signingKeys = new List<SecurityKey> {
-    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
-};
-try {
-    // Thử thêm bản Base64 (phòng trường hợp Service 3 dùng Base64)
-    signingKeys.Add(new SymmetricSecurityKey(Convert.FromBase64String(jwtSecret)));
-} catch { }
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,
-        ValidIssuer = jwtIssuer,
-        ValidateAudience = true,
-        ValidAudience = jwtAudience,
+        ValidateIssuer = false, // Tạm tắt để test Signature
+        ValidateAudience = false, // Tạm tắt để test Signature
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        IssuerSigningKeys = signingKeys, // Thử tất cả các key
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
         RoleClaimType = ClaimTypes.Role,
         NameClaimType = ClaimTypes.NameIdentifier,
         ClockSkew = TimeSpan.FromMinutes(5)
@@ -89,12 +76,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         OnAuthenticationFailed = context =>
         {
-            Console.WriteLine($"JWT Auth Failed: {context.Exception.Message}");
+            Console.WriteLine($"DEBUG AUTH: Fail Reason = {context.Exception.Message}");
             return Task.CompletedTask;
         },
         OnTokenValidated = context =>
         {
-            Console.WriteLine("JWT Auth SUCCESS!");
+            Console.WriteLine("DEBUG AUTH: SUCCESS! Token is valid.");
             return Task.CompletedTask;
         }
     };
